@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+    <link
+      rel="stylesheet"
+      href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"
+      integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm"
+      crossorigin="anonymous"
+    />
+  </head>
+  <body>
+    <section class="users-wrapper mt-5">
+      <div class="container">
+        <div class="row">
+          <div class="col col-4">
+            <div class="card">
+              <div class="card-header">Users List</div>
+              <ul class="list-group users-list"></ul>
+            </div>
+          </div>
+          <!-- /.col clo-4 -->
+          <div class="col col-6">
+            <div class="user-info"></div>
+            <!-- /.user-info -->
+          </div>
+          <!-- /.col clo-6 -->
+        </div>
+        <!-- /.row -->
+      </div>
+    </section>
+    <!-- /.users-wrapper -->
+    <script>
+      const apiURL = "https://jsonplaceholder.typicode.com";
+      const usersListEl = document.querySelector(".users-list");
+      const usersInfoEl = document.querySelector(".user-info");
+
+      //1. реализовать запрос получения пользователей
+      // function getUsersHTTP(cb) {
+      //   const xhr = new XMLHttpRequest();
+
+      //   xhr.open("GET", `${apiURL}/users`);
+
+      //   xhr.addEventListener("load", () => {
+      //     if (xhr.status !== 200) {
+      //       console.log("Error", xhr.status);
+      //       return;
+      //     }
+
+      //     const res = JSON.parse(xhr.responseText);
+      //     cb(res);
+      //   });
+
+      //   xhr.send();
+      // }
+
+      //* Моя реализация
+      async function getInfoFromUrl(url) {
+        try {
+          const response = await fetch(url).then((res) => res.json());
+          return response;
+        } catch (err) {
+          console.log(err);
+          throw err;
+        }
+      }
+
+      function getUsersFetc(cb) {
+        getInfoFromUrl(`${apiURL}/users`)
+          .then((users) => cb(users))
+          .catch((err) => console.log(err));
+      }
+
+      //2. реализовать обработчик ответа от сервера
+      function onGetUsersCallback(users) {
+        if (!users.length) {
+          return;
+        }
+
+        renderUsersList(users);
+      }
+
+      //3. рендер списка пользователей
+      function renderUsersList(users) {
+        const fragment = users.reduce(
+          (acc, user) => acc + userListItemTemplate(user),
+          ""
+        );
+
+        usersListEl.insertAdjacentHTML("afterbegin", fragment);
+      }
+
+      function userListItemTemplate(user) {
+        return `
+            <button type="button" 
+            class="list-group-item list-group-item-action" 
+            data-user-id="${user.id}">
+               ${user.name}
+            </button>
+          `;
+      }
+
+      //4. повесить событие клика на список
+      //5. получаем id пользователя
+      usersListEl.addEventListener("click", onUserClickHandler);
+
+      function onUserClickHandler(e) {
+        e.preventDefault();
+        const userId = e.target.dataset.userId;
+
+        if (userId) {
+          //getUserInfoHTTP(e.target.dataset.userId, onGetUserInfoCallback);
+          getInfoFromUrl(`${apiURL}/users/${userId}`)
+            .then((user) => onGetUserInfoCallback(user))
+            .catch((err) => console.log(err));
+        }
+      }
+
+      //6. делаем запрос на сервер по id пользователя
+      // function getUserInfoHTTP(id, cb) {
+      //   const xhr = new XMLHttpRequest();
+
+      //   xhr.open("GET", `${apiURL}/users/${id}`);
+
+      //   xhr.addEventListener("load", () => {
+      //     if (xhr.status !== 200) {
+      //       console.log("Error", xhr.status);
+      //       return;
+      //     }
+
+      //     const res = JSON.parse(xhr.responseText);
+      //     cb(res);
+      //   });
+
+      //   xhr.send();
+      // }
+
+      //7. обработчик на получение ответа от сервера
+      function onGetUserInfoCallback(user) {
+        if (!user.id) {
+          console.log("User not found");
+          return;
+        }
+        renderUserInfo(user);
+      }
+
+      //8. рендер инфо о пользователе
+      function renderUserInfo(user) {
+        usersInfoEl.innerHTML = "";
+
+        const template = userInfoTemplate(user);
+
+        usersInfoEl.insertAdjacentHTML("afterbegin", template);
+      }
+
+      function userInfoTemplate(user) {
+        return `
+          <div class="card border-dark mb-3">
+            <div class="card-header">${user.name}</div>
+            <div class="card-body text-dark">
+                <h5 class="card-title">${user.email}</h5>
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item"><b>Nickname:</b> ${user.username}</li>
+                    <li class="list-group-item"><b>Website:</b> ${user.website}</li>
+                    <li class="list-group-item"><b>Company:</b> ${user.company.name}</li>
+                    <li class="list-group-item"><b>City:</b> ${user.address.city}</li>
+                </ul>    
+            </div>
+            <div class="card-footer bg-transparent border-dark">Phone: ${user.phone}</div> 
+          </div>  
+          `;
+      }
+
+      // Init App
+      //getUsersHTTP(onGetUsersCallback);
+      getUsersFetc(onGetUsersCallback);
+    </script>
+  </body>
+</html>
